@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Ruta Brigadista</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg:#FFFFFF;
+  --panel:#FFFFFF;
+  --panel-alt:#FBF3EF;
+  --line:#EDE3DC;
+  --text:#221D1A;
+  --text-dim:#8C8178;
+  --brand:#FF4B21;
+  --brand-soft:#FFE7DD;
+  --wait:#E88A00;
+  --wait-soft:#FFF1DA;
+  --teal:#00A88E;
+  --teal-soft:#DEF6F1;
+  --coral:#E31C3D;
+  --coral-soft:#FDE3E6;
+  --shadow:0 3px 14px rgba(120,70,40,0.08);
+  --radius:14px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow-x:hidden;}
+.app{max-width:520px;margin:0 auto;padding:14px 14px 40px;width:100%;}
+
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 2px 16px;flex-wrap:wrap;}
+.hdr-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;letter-spacing:.5px;text-transform:uppercase;color:var(--brand);}
+.hdr-sub{font-size:11px;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin-top:-2px;}
+.hdr-actions{display:flex;gap:8px;}
+.icon-btn{background:var(--panel-alt);border:1px solid var(--line);color:var(--text-dim);border-radius:10px;padding:8px 10px;font-size:12px;cursor:pointer;font-family:'Inter';font-weight:600;}
+.icon-btn:hover{color:var(--brand);border-color:var(--brand);}
+.icon-btn:disabled{opacity:.4;cursor:default;}
+.icon-btn:disabled:hover{color:var(--text-dim);border-color:var(--line);}
+
+/* rail (metro-line breadcrumb) */
+.rail{display:flex;align-items:center;gap:6px;overflow-x:auto;padding:2px 2px 18px;scrollbar-width:none;}
+.rail::-webkit-scrollbar{display:none;}
+.rail-stop{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.rail-dot{width:9px;height:9px;border-radius:50%;background:var(--line);flex-shrink:0;}
+.rail-dot.done{background:var(--teal);}
+.rail-dot.now{background:var(--brand);box-shadow:0 0 0 4px var(--brand-soft);}
+.rail-seg{width:16px;height:2px;background:var(--line);flex-shrink:0;}
+.rail-label{font-size:10.5px;color:var(--text-dim);white-space:nowrap;font-family:'Barlow Condensed';letter-spacing:.05em;text-transform:uppercase;}
+.rail-label.now{color:var(--brand);font-weight:700;}
+
+/* home grid */
+.grid-label{font-family:'Barlow Condensed';font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin:4px 2px 10px;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.card{background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:var(--radius);padding:14px 12px;cursor:pointer;text-align:left;transition:border-color .15s, transform .1s;min-height:96px;display:flex;flex-direction:column;justify-content:space-between;}
+.card:hover{border-color:var(--brand);}
+.card:active{transform:scale(.98);}
+.card-ico{font-size:22px;}
+.card-label{font-family:'Barlow Condensed';font-weight:700;font-size:16px;line-height:1.15;margin-top:8px;text-transform:uppercase;letter-spacing:.01em;color:var(--text);}
+.card-tag{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;}
+
+/* panel/question */
+.panel{background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:var(--radius);padding:18px 16px;}
+.q-eyebrow{font-family:'Barlow Condensed';font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--brand);margin-bottom:6px;font-weight:700;}
+.q-title{font-size:18px;font-weight:600;line-height:1.35;margin-bottom:4px;color:var(--text);}
+.q-note{font-size:13px;color:var(--text-dim);margin-bottom:14px;line-height:1.5;}
+.opt{display:block;width:100%;text-align:left;background:var(--panel-alt);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:14px 14px;margin-top:9px;font-size:14.5px;font-weight:500;cursor:pointer;font-family:'Inter';line-height:1.4;}
+.opt:hover{border-color:var(--brand);background:var(--brand-soft);}
+.opt:active{transform:scale(.99);}
+.opt .opt-sub{display:block;font-size:11.5px;color:var(--text-dim);margin-top:3px;font-weight:400;}
+
+/* result card */
+.result-band{border-radius:var(--radius) var(--radius) 0 0;padding:14px 16px;font-family:'Barlow Condensed';font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+.band-wait{background:var(--wait-soft);color:var(--wait);}
+.band-escalate{background:var(--coral-soft);color:var(--coral);}
+.band-self{background:var(--teal-soft);color:var(--teal);}
+.band-info{background:var(--panel-alt);color:var(--text-dim);}
+.result-body{background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);border-top:none;border-radius:0 0 var(--radius) var(--radius);padding:16px;}
+.result-title{font-size:17px;font-weight:700;margin-bottom:10px;line-height:1.35;color:var(--text);}
+.result-lead{font-size:13.5px;color:var(--text-dim);line-height:1.55;margin-bottom:14px;}
+
+.route-label{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;font-family:'Barlow Condensed';}
+.route-chain{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:16px;}
+.route-badge{background:var(--panel-alt);border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;color:var(--text);}
+.route-arrow{color:var(--brand);font-weight:700;}
+
+.block{margin-bottom:14px;}
+.block-h{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;font-family:'Barlow Condensed';display:flex;align-items:center;gap:5px;}
+.chk{font-size:13.5px;color:var(--text);margin:4px 0;padding-left:18px;position:relative;line-height:1.45;}
+.chk::before{content:"✓";position:absolute;left:0;color:var(--teal);font-weight:700;}
+.warn{font-size:13.5px;color:var(--text);margin:4px 0;padding-left:18px;position:relative;line-height:1.45;}
+.warn::before{content:"⚠";position:absolute;left:0;color:var(--coral);}
+.golden{background:var(--coral-soft);border:1px solid var(--coral);border-radius:10px;padding:12px 14px;margin-bottom:14px;}
+.golden-h{font-family:'Barlow Condensed';font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--coral);margin-bottom:6px;}
+.golden-b{font-size:13.5px;line-height:1.5;color:var(--text);}
+.tip{font-size:12.5px;color:var(--text-dim);font-style:italic;line-height:1.5;border-top:1px dashed var(--line);padding-top:10px;margin-top:4px;}
+
+/* form (registro para Defensoría) */
+.field{margin-top:12px;}
+.field label{display:block;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim);margin-bottom:5px;font-family:'Barlow Condensed';font-weight:600;}
+.field input[type=text],.field input[type=email],.field input[type=tel],.field textarea{
+  width:100%;background:var(--panel-alt);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:10px 11px;font-size:14px;font-family:'Inter';resize:vertical;
+}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--brand);}
+.field input[type=file]{width:100%;font-size:12.5px;color:var(--text-dim);}
+.form-err{display:none;color:var(--coral);font-size:12.5px;margin-top:12px;padding:8px 10px;background:var(--coral-soft);border-radius:8px;}
+.form-err.show{display:block;}
+.opt-submit{margin-top:18px;background:var(--brand);color:#fff;border-color:var(--brand);font-weight:700;text-align:center;}
+
+.result-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;}
+.btn{flex:1;min-width:120px;border-radius:10px;padding:12px;font-family:'Barlow Condensed';font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;border:1px solid var(--line);cursor:pointer;}
+.btn-primary{background:var(--brand);color:#fff;border-color:var(--brand);}
+.btn-ghost{background:var(--panel-alt);color:var(--text-dim);}
+.btn-ghost:hover{color:var(--text);border-color:var(--brand);}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--teal);color:#fff;padding:9px 16px;border-radius:999px;font-size:12.5px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .2s;box-shadow:var(--shadow);}
+.toast.show{opacity:1;}
+
+/* pestañas */
+.tabbar{display:flex;gap:6px;margin-bottom:16px;background:var(--panel-alt);border:1px solid var(--line);border-radius:12px;padding:4px;}
+.tab-btn{flex:1;background:transparent;border:none;border-radius:9px;padding:10px 6px;font-family:'Barlow Condensed';font-weight:700;font-size:12.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--text-dim);cursor:pointer;}
+.tab-btn.active{background:var(--panel);color:var(--brand);box-shadow:var(--shadow);}
+.tab-btn:hover:not(.active){color:var(--text);}
+
+.section-hdr{padding:2px 2px 16px;}
+.news-section-hdr{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.news-toggle-btn{white-space:nowrap;}
+
+/* noticias */
+.empty-state{text-align:center;padding:36px 16px;}
+.empty-ico{font-size:32px;margin-bottom:10px;}
+.news-card{margin-bottom:10px;}
+.news-date{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--brand);font-family:'Barlow Condensed';font-weight:700;margin-bottom:4px;}
+.news-img{width:100%;border-radius:10px;margin:10px 0;display:block;border:1px solid var(--line);}
+
+/* preguntas frecuentes */
+.faq-manual-card{margin-bottom:14px;}
+.faq-download{display:inline-block;width:auto;margin-top:10px;text-decoration:none;padding:11px 18px;}
+.faq-list{display:flex;flex-direction:column;gap:8px;}
+.faq-item{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;}
+.faq-q{list-style:none;cursor:pointer;padding:14px 16px;font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;justify-content:space-between;}
+.faq-q::-webkit-details-marker{display:none;}
+.faq-q::after{content:'+';color:var(--brand);font-size:18px;font-weight:700;margin-left:10px;flex-shrink:0;}
+.faq-item[open] .faq-q::after{content:'–';}
+.faq-a{padding:0 16px 16px;font-size:13.5px;color:var(--text-dim);line-height:1.55;}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="toast" id="toast">Copiado</div>
+
+<script>
+/* ---------- helpers para armar nodos ---------- */
+function gateBundle(id, catId, textoAccion, next, tip){
+  return {
+    [id]: {
+      type:'q',
+      eyebrow:'Paso 1 · Filtro obligatorio',
+      title:'¿El RT ya escribió al Centro de Ayuda por este caso?',
+      note:'Regla de oro: nunca se escala a Defensoría sin haber agotado antes el canal regular.',
+      options:[
+        {label:'No, todavía no ha escrito', to:id+'_wait_no'},
+        {label:'Sí, pero lleva menos de 48h y el chat sigue abierto', to:id+'_wait_prog'},
+        {label:'Sí, ya pasaron 48h sin respuesta, o la respuesta no fue favorable', to:next}
+      ]
+    },
+    [id+'_wait_no']:{
+      type:'r', tone:'wait',
+      title:'Debe escribir primero al Centro de Ayuda',
+      lead:'Todavía no se cumple el filtro obligatorio. Guíe al RT para que abra el caso por la app siguiendo esta ruta exacta:',
+      route: textoAccion,
+      tip: tip || null,
+      end:true
+    },
+    [id+'_wait_prog']:{
+      type:'r', tone:'wait',
+      title:'Tranquilo, el caso ya está en revisión',
+      lead:'Dígale al RT que se quede tranquilo: el caso ya quedó radicado y el equipo de Centro de Ayuda lo está revisando. Debe esperar a que se cumplan las 48 horas desde que escribió antes de poder escalar a Defensoría. No es necesario volver a escribir ni abrir un caso nuevo.',
+      end:true
+    }
+  };
+}
+function formNode(next){
+  return { type:'form', title:'Registro para Defensoría', next: next };
+}
+
+/* ---------- árbol de flujos ---------- */
+const STEPS = {
+
+/* 1. DEVOLUCIÓN DE PRODUCTO */
+devolucion: {
+  ...gateBundle('start', 'devolucion', ['Orden implicada','"Hice la devolución y no se ve reflejado"','Describir devolución física + ajuste pendiente'], 'tipo_situacion'),
+  tipo_situacion:{
+    type:'q', eyebrow:'Paso 2', title:'¿La situación es por una orden cancelada, liberada o tramitada?',
+    note:'Liberada: la orden desapareció de la app y el RT no tiene el ID. Tramitada: la orden se cerró/finalizó sin la validación correspondiente.',
+    options:[
+      {label:'Orden cancelada', to:'orden_exacta'},
+      {label:'Liberada (desapareció de la app, sin ID)', to:'form_devolucion', eviFlag:false},
+      {label:'Tramitada', to:'evidencia_tramitada'}
+    ]
+  },
+  evidencia_tramitada:{
+    type:'q', eyebrow:'Paso 3', title:'¿El RT cuenta con evidencia clara y legible de la devolución?',
+    options:[
+      {label:'Sí, tiene evidencia', to:'form_devolucion', eviFlag:false},
+      {label:'No tiene evidencia', to:'acercarse_devolucion', eviFlag:true}
+    ]
+  },
+  acercarse_devolucion:{
+    type:'r', tone:'self', title:'Debe acercarse al lugar donde hizo la devolución',
+    lead:'Sin evidencia, indique al RT que se acerque físicamente al lugar (hub o fundación) donde realizó la devolución, para solicitar el soporte correspondiente antes de continuar con el caso.',
+    end:true
+  },
+  orden_exacta:{
+    type:'q', eyebrow:'Paso 3', title:'¿El ticket se ingresó desde la ORDEN EXACTA que generó el cobro?',
+    note:'Si no se selecciona la orden precisa, el bot no logra cruzar la información y responde "no registra deuda".',
+    options:[
+      {label:'No, se ingresó por otra vía o de forma genérica', to:'reintentar_orden'},
+      {label:'Sí, se ingresó desde la orden correcta', to:'evidencia_entrega'}
+    ]
+  },
+  reintentar_orden:{
+    type:'r', tone:'self', title:'Reintentar el ticket desde la orden correcta',
+    lead:'Indique al RT que debe volver a abrir el caso, esta vez seleccionando específicamente la orden que generó el cobro. Así el sistema podrá cruzar la información automáticamente.',
+    route:['Orden implicada','"Hice la devolución y no se ve reflejado"','Describir el ajuste pendiente'],
+    warnings:['Nunca dar por tramitada o finalizada una orden si el usuario no recibió físicamente el producto.'],
+    end:true
+  },
+  evidencia_entrega:{
+    type:'q', eyebrow:'Paso 4', title:'¿El RT cuenta con foto clara de la entrega o de la devolución?',
+    options:[
+      {label:'Sí, tiene evidencia legible', to:'form_devolucion', eviFlag:false},
+      {label:'No tiene evidencia', to:'form_devolucion', eviFlag:true}
+    ]
+  },
+  form_devolucion: formNode('escalar_devolucion'),
+  escalar_devolucion:{
+    type:'r', tone:'escalate', title:'Escalar a Defensoría al Repartidor',
+    lead:'Se cumplió el filtro obligatorio. El caso puede pasar a revisión.',
+    route:['Orden implicada','"Hice la devolución y no se ve reflejado"'],
+    evidence:['Foto clara y legible de la evidencia de entrega o devolución'],
+    warnings:['Recuerde al RT el hábito de fotografiar cada entrega física, así protege su cuenta ante reclamaciones futuras.'],
+    end:true
+  }
+},
+
+/* 2. ORDEN CANCELADA / NO ENTIENDO LA DEUDA */
+cancelada: {
+  ...gateBundle('start', 'cancelada', ['Orden implicada','"No entiendo la deuda"','Notificar lo ocurrido con el pedido'], 'evidencia_cancelada'),
+  evidencia_cancelada:{
+    type:'q', eyebrow:'Paso 2', title:'¿Tiene evidencia del inconveniente en la entrega (foto, chat, comprobante)?',
+    options:[
+      {label:'Sí', to:'form_cancelada', eviFlag:false},
+      {label:'No', to:'form_cancelada', eviFlag:true}
+    ]
+  },
+  form_cancelada: formNode('escalar_cancelada'),
+  escalar_cancelada:{
+    type:'r', tone:'escalate', title:'Escalar a Defensoría al Repartidor',
+    route:['Orden implicada','"No entiendo la deuda"'],
+    evidence:['Cualquier soporte disponible: fotos, capturas o comprobantes del pedido'],
+    warnings:['Si hay inconveniente en la entrega, lo correcto es iniciar la devolución en la app o pedir cancelación por soporte en vivo, nunca dejar la orden "colgada".'],
+    noEviWarnings:['Sin evidencia, el caso puede tardar mucho más en resolverse.','Si es posible, sugiera al RT acercarse al aliado (comercio) para solicitar el soporte; esto ayuda a una validación más rápida.'],
+    end:true
+  }
+},
+
+/* 3. BLOQUEO / INHABILIDAD */
+bloqueo: {
+  ...gateBundle('start', 'bloqueo', ['"¿Necesitas ayuda?"','"Ayuda no relacionada a un pedido"','"Mi cuenta está suspendida"','Describir la solicitud'], 'previamente_negado',
+    'El sistema puede solicitar el detalle de la solicitud hasta 3 veces para garantizar tener toda la información del proceso; indique al RT que responda cada vez con el mayor detalle posible.'),
+  previamente_negado:{
+    type:'q', eyebrow:'Paso 2', title:'¿Este caso ya recibió antes una respuesta NEGATIVA formal (presencial o por correo)?',
+    options:[
+      {label:'No, es la primera vez que se presenta', to:'form_bloqueo'},
+      {label:'Sí, ya fue negado anteriormente', to:'evidencia_nueva'}
+    ]
+  },
+  evidencia_nueva:{
+    type:'q', eyebrow:'Paso 3', title:'¿El RT tiene un soporte o argumento nuevo, distinto al ya presentado?',
+    options:[
+      {label:'Sí, hay evidencia nueva', to:'form_bloqueo'},
+      {label:'No, es la misma solicitud repetida', to:'no_reabrir'}
+    ]
+  },
+  form_bloqueo: formNode('escalar_bloqueo'),
+  no_reabrir:{
+    type:'r', tone:'info', title:'No es posible reabrir el caso',
+    lead:'Si la Defensoría ya negó el caso (por ejemplo, por irregularidades graves o suplantación) y no hay soporte nuevo, insistir constituye incumplimiento directo de los Términos y Condiciones que el RT aceptó.',
+    warnings:['No prometer una revisión distinta. Explicar con empatía que sin evidencia nueva no hay intervención posible desde la Defensoría.'],
+    end:true
+  },
+  escalar_bloqueo:{
+    type:'r', tone:'escalate', title:'Escalar a Defensoría al Repartidor',
+    route:['"¿Necesitas ayuda?"','"Ayuda no relacionada a un pedido"','"Mi cuenta está suspendida"','Describir la solicitud'],
+    tip:'El sistema puede solicitar el detalle de la solicitud hasta 3 veces para garantizar tener toda la información del proceso; indique al RT que responda cada vez con el mayor detalle posible.',
+    warnings:['Cada caso es individual: que otro RT haya sido habilitado por un motivo similar no garantiza el mismo resultado. Nunca comparar ni prometer el mismo desenlace.'],
+    end:true
+  }
+},
+
+/* 4. FALLA DE PAGO EN EL ALIADO */
+pago_aliado:{
+  start:{
+    type:'q', eyebrow:'Paso 1', title:'¿Con qué método fue la falla de pago?',
+    options:[
+      {label:'Rappicash (cajero)', to:'evidencia_rappicash'},
+      {label:'Payless / Tarjeta Pomelo', to:'gate_payless'}
+    ]
+  },
+  evidencia_rappicash:{
+    type:'q', eyebrow:'Paso 2', title:'¿El RT tiene el voucher o evidencia que arroja el cajero?',
+    options:[
+      {label:'Sí, tiene el voucher', to:'gate_rappicash', eviFlag:false},
+      {label:'No tiene el voucher', to:'gate_rappicash', eviFlag:true}
+    ]
+  },
+  ...gateBundle('gate_rappicash', 'pago_aliado', ['Orden implicada','"No entiendo la deuda"','Notificar la falla técnica'], 'form_pago_rappicash'),
+  form_pago_rappicash: formNode('escalar_rappicash'),
+  escalar_rappicash:{
+    type:'r', tone:'escalate', title:'Escalar a Defensoría al Repartidor',
+    route:['Orden implicada','"No entiendo la deuda"'],
+    evidence:['Foto del voucher que arroja el cajero, como evidencia de la falla'],
+    noEviWarnings:['Sin el voucher del cajero, la validación puede tardar mucho más.'],
+    end:true
+  },
+  ...gateBundle('gate_payless', 'pago_aliado', ['Orden implicada','"No entiendo la deuda"','Notificar la falla técnica'], 'form_pago_payless'),
+  form_pago_payless: formNode('escalar_payless'),
+  escalar_payless:{
+    type:'r', tone:'escalate', title:'Escalar a Defensoría al Repartidor',
+    route:['Orden implicada','"No entiendo la deuda"'],
+    evidence:['Voucher impreso que certifique que la transacción NO fue exitosa'],
+    end:true
+  }
+},
+
+/* 5. RECAUDO / PAGO DE DEUDA QUE NO SE REFLEJA */
+recaudo:{
+  start:{
+    type:'q', eyebrow:'Paso 1', title:'¿El RT tiene el comprobante del pago que realizó?',
+    note:'Sin comprobante el bot no puede validar el recaudo.',
+    options:[
+      {label:'No tiene comprobante', to:'sin_comprobante'},
+      {label:'Sí, tiene el comprobante', to:'gate_recaudo'}
+    ]
+  },
+  sin_comprobante:{
+    type:'r', tone:'info', title:'Debe solicitar el comprobante antes de escalar',
+    lead:'Indique al RT que debe comunicarse con el aliado o el medio de pago correspondiente solicitando la evidencia del pago (comprobante de transferencia, recibo de cajero, etc.). Solo una vez la tenga, debe contactar al Centro de Ayuda para reportar el recaudo.',
+    end:true
+  },
+  ...gateBundle('gate_recaudo', 'recaudo', ['Centro de Ayuda','"Ayuda no relacionada a un pedido"','"Pagué mi deuda y no se refleja"','Cargar evidencia fotográfica legible'], 'form_recaudo'),
+  form_recaudo: formNode('escalar_recaudo'),
+  escalar_recaudo:{
+    type:'r', tone:'escalate', title:'Escalar a Defensoría al Repartidor',
+    route:['Centro de Ayuda','"Ayuda no relacionada a un pedido"','"Pagué mi deuda y no se refleja"'],
+    evidence:['Comprobante de pago, legible y completo'],
+    warnings:['Si el RT no tenía deuda vigente al momento de pagar, ese abono activa alertas automáticas de prevención de fraude y genera retención preventiva de ganancias. Aclárele que solo debe pagar si realmente tiene una deuda registrada.'],
+    end:true
+  }
+},
+
+/* 6. REEMBOLSO */
+reembolso:{
+  start:{
+    type:'q', eyebrow:'Paso 1', title:'¿El RT cuenta con la factura de compra, completa y legible, donde se vean los productos y el valor pagado?',
+    options:[
+      {label:'No tiene factura', to:'factura_en_chat'},
+      {label:'Sí, tiene la factura completa', to:'gate_reembolso', eviFlag:false}
+    ]
+  },
+  factura_en_chat:{
+    type:'q', eyebrow:'Paso 2', title:'¿Dejó la foto de la factura en el chat con el usuario dentro de la app?',
+    options:[
+      {label:'Sí, quedó en el chat del pedido', to:'gate_reembolso', eviFlag:false},
+      {label:'No, tampoco quedó ahí', to:'sin_factura', eviFlag:true}
+    ]
+  },
+  sin_factura:{
+    type:'r', tone:'info', title:'Debe conseguir la factura primero',
+    lead:'Sin la factura de compra legible, donde se vean los productos y el valor pagado, el proceso no se puede iniciar. Indique al RT que la consiga, o que revise si quedó una foto en el chat del pedido con el usuario, antes de continuar.',
+    end:true
+  },
+  ...gateBundle('gate_reembolso', 'reembolso', ['Pedido entregado correspondiente','"Pagué el pedido con mi dinero"','Cargar foto nítida de la factura'], 'form_reembolso'),
+  form_reembolso: formNode('escalar_reembolso'),
+  escalar_reembolso:{
+    type:'r', tone:'escalate', title:'Escalar a Defensoría al Repartidor',
+    route:['Pedido entregado','"Pagué el pedido con mi dinero"'],
+    evidence:['Factura de compra completa y legible, con productos y valor pagado visibles'],
+    end:true
+  }
+},
+
+/* 7. FRAUDE / ATO */
+ato:{
+  start:{ type:'redirect', to:{cat:'ato', step:'aviso'} },
+  aviso:{
+    type:'r', tone:'info', title:'Posible fraude por suplantación (Account Takeover)',
+    lead:'El RT recibió una llamada de alguien que se hizo pasar por Soporte Oficial de Rappi, entregó datos o códigos de acceso, y ahora reporta pedidos que no reconoce, deudas altas o su cuenta inhabilitada.',
+    golden:'No prometas ni te comprometas a que el caso será solucionado de forma positiva o que la deuda será borrada. Está prohibido decir frases como "Sí, Rappi te va a ajustar el saldo" o "La Defensoría te va a habilitar".',
+    warnings:['Rappi nunca solicita códigos de verificación por llamada, correo o mensaje de texto. El código en sí mismo advierte: "No compartas este código con nadie". Entregarlo es responsabilidad exclusiva del repartidor.'],
+    end:false, nextLabel:'Continuar', next:'tipo_ato'
+  },
+  tipo_ato:{
+    type:'q', eyebrow:'Paso 1', title:'¿El caso presenta inhabilidad de cuenta o una deuda generada por el fraude?',
+    options:[
+      {label:'Inhabilidad de cuenta', to:'gate_ato_inhabilidad'},
+      {label:'Deuda generada por pedidos fraudulentos', to:'gate_ato_deuda'}
+    ]
+  },
+  ...gateBundle('gate_ato_inhabilidad', 'ato', ['"¿Necesitas ayuda?"','"Ayuda no relacionada a un pedido"','"Mi cuenta está inhabilitada"','Reportar el incidente de fraude'], 'form_ato',
+    'El sistema puede solicitar el detalle de la solicitud hasta 3 veces para garantizar tener toda la información del proceso; indique al RT que responda cada vez con el mayor detalle posible.'),
+  ...gateBundle('gate_ato_deuda', 'ato', ['Orden implicada','"No entiendo la deuda"','Reportar el incidente de fraude'], 'form_ato'),
+  form_ato: formNode('escalar_ato'),
+  escalar_ato:{
+    type:'r', tone:'escalate', title:'Escalar a Defensoría al Repartidor',
+    lead:'El caso entra a revisión técnica. Explíquele al RT, con empatía pero claridad, que cada repartidor es responsable exclusivo de la custodia y seguridad de sus credenciales.',
+    golden:'Recuerde: no prometer que la deuda será ajustada o borrada, ni que la cuenta será habilitada.',
+    end:true
+  }
+},
+
+/* 8. BALANCE Y FECHAS DE PAGO */
+balance:{
+  start:{
+    type:'r', tone:'info', title:'Balance y fechas de pago',
+    lead:'El pago habitual se procesa los días martes. Consulte el calendario oficial: soyrappi.com.co/calendario2025',
+    evidence:['Si el pago no llegó el martes, puede tratarse de un reintento bancario, algunos bancos tardan un poco más en procesar el abono.'],
+    warnings:['Verifique siempre que el RT tenga una cuenta bancaria asociada y activa en la app. Si no la tiene registrada, el pago simplemente no se efectúa.'],
+    end:true
+  }
+},
+
+/* 9. VALIDACIÓN DE IDENTIDAD */
+identidad:{
+  start:{
+    type:'r', tone:'info', title:'Validación de identidad',
+    lead:'Las validaciones se hacen estrictamente con documentos ORIGINALES y FÍSICOS. Pida al RT que le muestre físicamente el documento con el que intenta ingresar.',
+    warnings:[
+      'El sistema rechaza automáticamente: fotocopias, fotos de pantalla y documentos plastificados.',
+      'El PEP (Permiso Especial de Permanencia) no es un documento válido para este proceso.'
+    ],
+    end:true
+  }
+},
+
+/* 10. ACTUALIZACIÓN CUENTA BANCARIA */
+bancaria:{
+  start:{
+    type:'r', tone:'info', title:'Actualización de cuenta bancaria',
+    lead:'Este trámite es 100% autónomo y confidencial: el RT debe hacerlo directamente desde su app. Por seguridad, la Defensoría no realiza modificaciones manuales.',
+    warnings:['Si el sistema marca error, generalmente se debe a que algún dato se está ingresando de forma incorrecta. Revise con el RT campo por campo antes de escalar.'],
+    end:true
+  }
+},
+
+/* 11. RETENCIÓN POR RECAUDO ALTO */
+retencion:{
+  start:{
+    type:'r', tone:'info', title:'Retención de ganancias por recaudo de alto valor',
+    lead:'Si el RT no tiene deudas vigentes, no debe realizar pagos ni abonos a la cuenta. Hacerlo sin saldo en contra activa alertas automáticas de prevención de fraude y genera retención preventiva de sus ganancias.',
+    warnings:['Concientice al RT antes de que pague: primero confirmar si realmente existe una deuda registrada.'],
+    end:true
+  }
+},
+
+/* 12. CASO YA NEGADO */
+negado:{
+  start:{
+    type:'q', eyebrow:'Paso 1', title:'¿El RT tiene un soporte o argumento nuevo, distinto al ya presentado en su caso anterior?',
+    options:[
+      {label:'Sí, hay evidencia nueva', to:'form_negado'},
+      {label:'No, quiere que se revise lo mismo otra vez', to:'no_reabrir_general'}
+    ]
+  },
+  form_negado: formNode('reabrir_con_evidencia'),
+  reabrir_con_evidencia:{
+    type:'r', tone:'escalate', title:'Puede escalarse con el nuevo soporte',
+    lead:'Con evidencia adicional real, el caso puede volver a revisión en Defensoría al Repartidor.',
+    end:true
+  },
+  no_reabrir_general:{
+    type:'r', tone:'info', title:'No es posible reabrir el caso',
+    lead:'Una respuesta negativa formal ya emitida (por irregularidades graves, suplantación u otro motivo) no puede reabrirse por inconformidad. Insistir sin evidencia nueva constituye incumplimiento de los Términos y Condiciones.',
+    end:true
+  }
+}
+};
+
+/* ---------- configuración ---------- */
+const CONFIG = {
+  // Pega aquí el link para compartir del Manual Operativo (PDF) subido a Drive.
+  // Ver guía de despliegue para instrucciones de cómo obtenerlo.
+  manualPdfUrl: '',
+  // Pega aquí la URL de tu implementación de Apps Script (termina en /exec).
+  // Sin esto, el registro de casos, las noticias y la publicación no funcionan.
+  appsScriptUrl: 'https://script.google.com/macros/s/AKfycbzRPEP9GciylXYN92atnmr8S3RVaBALM4sBQDXLwck3TzAiSszomUAC1DiczSQsxcnR9g/exec'
+};
+
+/**
+ * Habla con el backend de Apps Script por fetch() (funciona desde cualquier
+ * dominio, incluido GitHub Pages). Devuelve siempre una Promise que resuelve
+ * a { ok, data/error } — nunca rechaza, para simplificar el manejo de errores.
+ */
+function callApi(action, payload, method){
+  method = method || 'POST';
+  if(!CONFIG.appsScriptUrl){
+    return Promise.resolve({ ok:false, error:'Falta configurar CONFIG.appsScriptUrl en el código.' });
+  }
+  if(method === 'GET'){
+    const params = Object.assign({ action:action }, payload || {});
+    const parts = [];
+    for(const k in params){ parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k])); }
+    return fetch(CONFIG.appsScriptUrl + '?' + parts.join('&'))
+      .then(function(r){ return r.json(); })
+      .catch(function(err){ return { ok:false, error:String(err) }; });
+  }
+  const body = Object.assign({ action:action }, payload || {});
+  return fetch(CONFIG.appsScriptUrl, {
+    method:'POST',
+    headers:{ 'Content-Type':'text/plain;charset=utf-8' }, // evita el preflight que Apps Script no responde
+    body: JSON.stringify(body)
+  })
+    .then(function(r){ return r.json(); })
+    .catch(function(err){ return { ok:false, error:String(err) }; });
+}
+
+/* ---------- preguntas frecuentes (basadas en el Manual Operativo Brigadista) ---------- */
+const FAQ_ITEMS = [
+  {
+    q:'¿Cuál es mi propósito como brigadista?',
+    a:'Ser el primer filtro operativo: dominando las 11 situaciones más frecuentes puedes guiar y responder directamente al RT en la calle, evitando escalamientos innecesarios y haciendo todo el ecosistema más rápido y eficiente.'
+  },
+  {
+    q:'¿Cuál es la regla de oro antes de escalar cualquier caso?',
+    a:'El Centro de Ayuda siempre va primero. Pregunta: ¿ya abrió un ticket? Si no, guíalo al menú de ayuda de la app. Si sí, ¿ya pasaron 48 horas? Si no han pasado, debe esperar la resolución por ese canal. Solo si ya pasaron 48h sin respuesta favorable se revisa y/o deriva a Defensoría.'
+  },
+  {
+    q:'¿Qué documentos son válidos para la validación de identidad?',
+    a:'Únicamente documentos originales y físicos. El sistema biométrico rechaza automáticamente copias, fotos de pantalla o documentos plastificados; exige ver el documento físico original.'
+  },
+  {
+    q:'¿Rappi solicita códigos de verificación por llamada o mensaje de texto?',
+    a:'Nunca. Entregar ese código inactiva la cuenta o genera deudas irreales (fraude por suplantación / ATO). Guía al RT para reportarlo por Centro de Ayuda, seleccionando "Mi cuenta está inhabilitada" o "No entiendo la deuda" según aplique.'
+  },
+  {
+    q:'¿Cuándo se pagan las ganancias y qué pasa si el pago no llega?',
+    a:'Los cortes son los días martes. Si el pago rebota, el sistema hace reintento bancario automático. Sin una cuenta bancaria registrada en la app, el pago simplemente no se efectúa.'
+  },
+  {
+    q:'¿La Defensoría puede modificar los datos bancarios de un RT?',
+    a:'No. Es un trámite 100% autogestionable y confidencial que el RT debe hacer directamente desde su app. La Defensoría no hace modificaciones manuales. Si el sistema marca error, generalmente es porque se está ingresando algún dato incorrecto.'
+  },
+  {
+    q:'¿Qué pasa si un RT hace un abono sin tener deuda vigente?',
+    a:'Se activa una alerta automática de prevención de fraude y el sistema genera una retención preventiva de las ganancias. Nunca se debe inyectar dinero a la app solo para "guardarlo".'
+  },
+  {
+    q:'¿Qué evidencia debe guardar siempre el RT?',
+    a:'El voucher del cajero o Rappicash, las facturas de pedidos pagados con dinero propio, y una foto clara de cada entrega física. Sin evidencia, no hay reclamo posible.'
+  },
+  {
+    q:'¿Cuál es el flujo correcto para reclamar una devolución?',
+    a:'Siempre reclamar desde la orden exacta en el Centro de Ayuda, seleccionando "Hice la devolución y no se ve reflejado". Si se elige otra ruta, el bot no logra cruzar la información y responde que no registra deuda.'
+  },
+  {
+    q:'¿Cuál es la ruta oficial para cada tipo de caso?',
+    a:'Devoluciones: orden implicada → "Hice la devolución y no se ve reflejado". Cancelada no recibida: orden implicada → "No entiendo la deuda" (anexando evidencia). Cuenta suspendida: pantalla de bloqueo → "¿Necesitas ayuda?" → "Ayuda no relacionada a un pedido" → "Mi cuenta está suspendida". Fallas del aliado (Rappicash/Pomelo): orden implicada → "No entiendo la deuda" (voucher obligatorio). Pago de deuda no reflejado: "Ayuda no relacionada a un pedido" → "Pagué mi deuda y no se refleja".'
+  },
+  {
+    q:'¿Cuánto tarda la Defensoría en resolver un caso escalado?',
+    a:'No es un canal de chat en vivo. Cada caso se analiza por separado y requiere tiempo de validación interna con otras áreas antes de dar una respuesta.'
+  },
+  {
+    q:'¿Se puede revertir una decisión negativa de la Defensoría?',
+    a:'No. Un "no" por infringir los Términos y Condiciones o por fraude detectado es una decisión definitiva y no se revierte, salvo que exista un soporte o argumento realmente nuevo.'
+  },
+  {
+    q:'Si dos repartidores tienen el mismo problema, ¿aplica la misma solución?',
+    a:'No. Cada caso es único y se evalúa por separado; el historial y comportamiento de cada cuenta es distinto, así que nunca se deben comparar cuentas ni prometer el mismo desenlace.'
+  },
+  {
+    q:'¿Dónde encuentro información general no operativa (beneficios, Turbo, etc.)?',
+    a:'En el Blog de SoyRappi: Ganancias y Beneficios (esquema de pagos y recompensas), Turbo y Estados (niveles del RT y entregas ultrarrápidas), Conceptos Básicos (FAQs y reglas generales), y Presencia Global (portal específico por país en LATAM).'
+  },
+  {
+    q:'¿Cómo se registra un nuevo repartidor?',
+    a:'Descargar la app SoyRappi (disponible solo para Android), cargar los datos con cédula, PPT o CE (siendo mayor de edad), y hacer clic en "Conéctate ahora" para la primera entrega — la aprobación es rápida y puede empezar en 24h. Requisitos clave: cualquier tipo de maleta, vehículo flexible (moto, bici o auto) y total flexibilidad de horarios.'
+  }
+];
+
+/* Las noticias ahora se cargan dinámicamente desde la hoja "Noticias"
+   en Google Sheets (ver Codigo.gs -> getNoticias / publicarNoticia). */
+
+/* ---------- catálogo home ---------- */
+const CATALOG = [
+  {id:'devolucion', icon:'📦', label:'Devolución de producto', tag:'No se refleja el ajuste'},
+  {id:'cancelada', icon:'🚫', label:'Deuda', tag:'Orden cancelada · no entiendo la deuda'},
+  {id:'bloqueo', icon:'🔒', label:'Cuenta bloqueada', tag:'Inhabilidad / suspensión'},
+  {id:'pago_aliado', icon:'💳', label:'Falla de pago', tag:'Rappicash · Payless · Pomelo'},
+  {id:'recaudo', icon:'🧾', label:'Pagué mi deuda', tag:'No se refleja el recaudo'},
+  {id:'reembolso', icon:'💵', label:'Pagué con mi dinero', tag:'Reembolso'},
+  {id:'ato', icon:'☎️', label:'Fraude por llamada', tag:'Account Takeover (ATO)'},
+  {id:'balance', icon:'📅', label:'Balance y pagos', tag:'Fechas y reintentos'},
+  {id:'identidad', icon:'🪪', label:'Validación identidad', tag:'Documentos originales'},
+  {id:'bancaria', icon:'🏦', label:'Cuenta bancaria', tag:'Actualizar datos'},
+  {id:'retencion', icon:'⛔', label:'Retención de saldo', tag:'Recaudo de alto valor'},
+  {id:'negado', icon:'📌', label:'Caso ya negado', tag:'Respuesta definitiva'}
+];
+
+/* ---------- estado ---------- */
+let state = {
+  tab:'consultas', cat:null, step:null, history:[], formData:null, sinEvidencia:false,
+  noticias:[], noticiasLoading:false, noticiasError:null, noticiasLoaded:false, noticiasFormOpen:false
+}; // history: [{cat,step,title}]
+
+function catLabel(id){
+  var found = CATALOG.find(function(c){ return c.id === id; });
+  return (found && found.label) || id;
+}
+
+function selectTab(tabId){
+  state.tab = tabId;
+  if(tabId==='noticias' && !state.noticiasLoaded){ loadNoticias(); }
+  render();
+}
+
+function loadNoticias(){
+  state.noticiasLoading = true;
+  state.noticiasError = null;
+  render();
+  callApi('getNoticias', {}, 'GET').then(function(res){
+    if(res && res.ok){
+      state.noticias = res.data || [];
+    } else {
+      state.noticiasError = 'No se pudieron cargar las noticias: ' + (res && res.error ? res.error : 'error desconocido');
+    }
+    state.noticiasLoading = false;
+    state.noticiasLoaded = true;
+    render();
+  });
+}
+
+function toggleNoticiaForm(){
+  state.noticiasFormOpen = !state.noticiasFormOpen;
+  render();
+}
+
+function submitNoticia(){
+  const get = id => document.getElementById(id).value.trim();
+  const codigo = get('n_codigo');
+  const titulo = get('n_titulo');
+  const cuerpo = get('n_cuerpo');
+  const imgInput = document.getElementById('n_imagen');
+  const errBox = document.getElementById('n_err');
+  const btn = document.getElementById('n_submit_btn');
+
+  if(!codigo || !titulo || !cuerpo){
+    errBox.textContent = 'Complete el código de administrador, el título y el texto de la noticia.';
+    errBox.classList.add('show');
+    return;
+  }
+  errBox.classList.remove('show');
+
+  const payload = { codigo, titulo, cuerpo };
+
+  function enviar(){
+    if(btn){ btn.textContent = 'Publicando...'; btn.disabled = true; }
+    callApi('publicarNoticia', payload, 'POST').then(function(res){
+      if(btn){ btn.textContent = 'Publicar noticia'; btn.disabled = false; }
+      if(res && res.ok){
+        state.noticiasFormOpen = false;
+        loadNoticias();
+      } else {
+        errBox.textContent = (res && res.error) ? res.error : 'No se pudo publicar la noticia.';
+        errBox.classList.add('show');
+        render();
+      }
+    });
+  }
+
+  if(imgInput && imgInput.files && imgInput.files[0]){
+    const file = imgInput.files[0];
+    const reader = new FileReader();
+    reader.onload = function(){
+      payload.imagenBase64 = reader.result;
+      payload.imagenNombre = file.name;
+      enviar();
+    };
+    reader.readAsDataURL(file);
+  } else {
+    enviar();
+  }
+}
+
+function goHome(){
+  state = { tab: state.tab, cat:null, step:null, history:[], formData:null, sinEvidencia:false };
+  render();
+}
+function selectCat(catId){
+  state.cat = catId; state.step = 'start'; state.history = []; state.formData = null; state.sinEvidencia = false;
+  resolveRedirects();
+  pushHistory();
+  render();
+}
+function submitForm(nextId){
+  const get = id => document.getElementById(id).value.trim();
+  const repartidor = get('f_repartidor');
+  const ciudad = get('f_ciudad');
+  const orden = get('f_orden');
+  const correo = get('f_correo');
+  const telefono = get('f_telefono');
+  const motivo = get('f_motivo');
+  const fotoInput = document.getElementById('f_foto');
+  const errBox = document.getElementById('f_err');
+  const btn = document.getElementById('f_submit_btn');
+  if(!repartidor || !ciudad || !correo || !telefono || !motivo){
+    errBox.textContent = 'Complete los campos obligatorios (*) antes de escalar.';
+    errBox.classList.add('show');
+    return;
+  }
+  errBox.classList.remove('show');
+
+  const targetNode = STEPS[state.cat][nextId];
+  const payload = {
+    categoria: catLabel(state.cat),
+    repartidor, ciudad, orden, correo, telefono, motivo,
+    ruta: (targetNode && targetNode.route) ? targetNode.route.join(' -> ') : ''
+  };
+  state.formData = { repartidor, ciudad, orden, correo, telefono, motivo, foto:'' };
+
+  function proceed(){ choose(nextId); }
+
+  if(fotoInput && fotoInput.files && fotoInput.files[0]){
+    const file = fotoInput.files[0];
+    state.formData.foto = file.name;
+    const reader = new FileReader();
+    reader.onload = function(){
+      payload.fotoBase64 = reader.result;
+      payload.fotoName = file.name;
+      sendToSheet(payload, btn, proceed);
+    };
+    reader.readAsDataURL(file);
+  } else {
+    sendToSheet(payload, btn, proceed);
+  }
+}
+
+function sendToSheet(payload, btn, onDone){
+  if(btn){ btn.textContent = 'Guardando...'; btn.disabled = true; }
+  callApi('saveCase', payload, 'POST').then(function(res){
+    if(btn){ btn.textContent = 'Registrar y escalar'; btn.disabled = false; }
+    if(!res || !res.ok){
+      alert('No se pudo guardar en la hoja: ' + (res && res.error ? res.error : 'error desconocido') + '. Se continúa igual; use "Copiar resumen" como respaldo.');
+    }
+    onDone();
+  });
+}
+function resolveRedirects(){
+  let node = STEPS[state.cat][state.step];
+  while(node && node.type==='redirect'){
+    state.cat = node.to.cat; state.step = node.to.step;
+    node = STEPS[state.cat][state.step];
+  }
+}
+function pushHistory(){
+  const node = STEPS[state.cat][state.step];
+  let title = node.title || node.eyebrow || catLabel(state.cat);
+  state.history.push({cat:state.cat, step:state.step, tone: node.type==='r'? node.tone : (node.type==='q'?'now':'now')});
+}
+function choose(to, eviFlag){
+  if(eviFlag !== undefined){ state.sinEvidencia = eviFlag; }
+  state.step = to;
+  resolveRedirects();
+  pushHistory();
+  render();
+}
+function goBack(){
+  if(state.history.length<=1){ goHome(); return; }
+  state.history.pop();
+  const prev = state.history[state.history.length-1];
+  state.cat = prev.cat; state.step = prev.step;
+  render();
+}
+function copySummary(){
+  const node = STEPS[state.cat][state.step];
+  let lines = [catLabel(state.cat).toUpperCase(), node.title];
+  if(node.route) lines.push('Ruta: ' + node.route.join(' ➔ '));
+  if(node.evidence) lines.push('Evidencia: ' + node.evidence.join(' | '));
+  if(node.tone==='escalate' && state.formData){
+    const fd = state.formData;
+    lines.push('--- Registro para Defensoría ---');
+    lines.push('ID repartidor: ' + fd.repartidor);
+    lines.push('Ciudad: ' + fd.ciudad);
+    if(fd.orden) lines.push('Orden: ' + fd.orden);
+    lines.push('Correo: ' + fd.correo);
+    lines.push('Teléfono: ' + fd.telefono);
+    lines.push('Motivo del escalamiento: ' + fd.motivo);
+    lines.push('Foto de evidencia: ' + (fd.foto || 'no adjunta, recuerde subirla por el canal oficial'));
+  }
+  if(node.warnings) lines.push('Atención: ' + node.warnings.join(' | '));
+  const text = lines.join('\n');
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text); }
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1400);
+}
+
+/* ---------- render ---------- */
+function render(){
+  const app = document.getElementById('app');
+  let html = renderTabBar();
+  if(state.tab==='noticias') html += renderNoticias();
+  else if(state.tab==='faq') html += renderFAQ();
+  else html += renderConsultas();
+  app.innerHTML = html;
+}
+
+function renderTabBar(){
+  const tabs = [
+    {id:'noticias', label:'Noticias'},
+    {id:'faq', label:'Preguntas frecuentes'},
+    {id:'consultas', label:'Otras consultas'}
+  ];
+  return `<div class="tabbar">` +
+    tabs.map(t=>`<button class="tab-btn ${state.tab===t.id?'active':''}" onclick="selectTab('${t.id}')">${t.label}</button>`).join('') +
+    `</div>`;
+}
+
+function renderNoticias(){
+  let html = `<div class="section-hdr news-section-hdr">
+    <div>
+      <div class="hdr-title">Noticias</div>
+      <div class="hdr-sub">Novedades y avisos para el equipo</div>
+    </div>
+    <button class="icon-btn news-toggle-btn" onclick="toggleNoticiaForm()">${state.noticiasFormOpen? '✕ Cerrar' : '+ Publicar'}</button>
+  </div>`;
+
+  if(state.noticiasFormOpen){
+    html += `<div class="panel">
+      <div class="q-eyebrow">Solo personal autorizado</div>
+      <div class="q-title">Publicar noticia</div>
+      <div class="q-note">Se requiere el código de administrador para publicar. Pídelo a quien administra esta herramienta.</div>
+      <div class="field"><label>Código de administrador *</label><input id="n_codigo" type="password" placeholder="••••••••"></div>
+      <div class="field"><label>Título *</label><input id="n_titulo" type="text" placeholder="Ej: Cambio en horario de pagos"></div>
+      <div class="field"><label>Texto de la noticia *</label><textarea id="n_cuerpo" rows="4" placeholder="Escribe el contenido de la noticia..."></textarea></div>
+      <div class="field"><label>Imagen (opcional)</label><input id="n_imagen" type="file" accept="image/*"></div>
+      <div class="form-err" id="n_err"></div>
+      <button class="opt opt-submit" id="n_submit_btn" onclick="submitNoticia()">Publicar noticia</button>
+    </div>`;
+  }
+
+  if(state.noticiasLoading){
+    html += `<div class="panel empty-state"><div class="empty-ico">⏳</div><div class="q-note">Cargando noticias...</div></div>`;
+    return html;
+  }
+  if(state.noticiasError){
+    html += `<div class="panel empty-state"><div class="empty-ico">⚠️</div><div class="q-note">${state.noticiasError}</div></div>`;
+    return html;
+  }
+  if(!state.noticias.length){
+    html += `<div class="panel empty-state">
+      <div class="empty-ico">🗞️</div>
+      <div class="q-title">Aún no hay noticias publicadas</div>
+      <div class="q-note">Vuelve pronto — aquí aparecerán los avisos y novedades para brigadistas.</div>
+    </div>`;
+    return html;
+  }
+  state.noticias.forEach(n=>{
+    html += `<div class="panel news-card">
+      ${n.fecha? `<div class="news-date">${n.fecha}</div>` : ''}
+      <div class="result-title">${n.titulo}</div>
+      ${n.imagen? `<img class="news-img" src="${n.imagen}" alt="${n.titulo}">` : ''}
+      <div class="result-lead">${n.cuerpo}</div>
+    </div>`;
+  });
+  return html;
+}
+
+function renderFAQ(){
+  let html = `<div class="section-hdr">
+    <div class="hdr-title">Preguntas frecuentes</div>
+    <div class="hdr-sub">Basado en el Manual Operativo Brigadista</div>
+  </div>`;
+  html += `<div class="panel faq-manual-card">
+    <div class="q-title">Manual Operativo Brigadista (PDF)</div>
+    <div class="q-note">Guía visual completa de soporte y filtro en calle.</div>
+    ${CONFIG.manualPdfUrl
+      ? `<a class="btn btn-primary faq-download" href="${CONFIG.manualPdfUrl}" target="_blank" rel="noopener">Descargar / ver manual</a>`
+      : `<div class="warn" style="padding-left:0;margin-top:10px;">El link del manual todavía no está configurado. Sube el PDF a Drive, cópialo en CONFIG.manualPdfUrl dentro del código y vuelve a implementar.</div>`}
+  </div>`;
+  html += `<div class="faq-list">`;
+  FAQ_ITEMS.forEach((item,i)=>{
+    html += `<details class="faq-item">
+      <summary class="faq-q">${item.q}</summary>
+      <div class="faq-a">${item.a}</div>
+    </details>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+function renderConsultas(){
+  let html = '';
+
+  html += `<div class="hdr">
+    <div>
+      <div class="hdr-title">Ruta Brigadista</div>
+      <div class="hdr-sub">${state.cat? catLabel(state.cat) : 'Filtro operativo · RTs'}</div>
+    </div>
+    <div class="hdr-actions">
+      <button class="icon-btn" onclick="goBack()" ${state.cat? '' : 'disabled'}>← Atrás</button>
+      <button class="icon-btn" onclick="goHome()" ${state.cat? '' : 'disabled'}>⟲ Temas</button>
+    </div>
+  </div>`;
+
+  if(state.cat){
+    html += `<div class="rail">`;
+    state.history.forEach((h,i)=>{
+      const isLast = i===state.history.length-1;
+      const dotClass = isLast? 'now' : 'done';
+      html += `<div class="rail-stop">
+        <div class="rail-dot ${dotClass}"></div>
+        <div class="rail-label ${isLast?'now':''}">${(h.title||'').slice(0,26)}${(h.title||'').length>26?'…':''}</div>
+      </div>`;
+      if(!isLast) html += `<div class="rail-seg"></div>`;
+    });
+    html += `</div>`;
+  }
+
+  if(!state.cat){
+    html += `<div class="grid-label">Seleccione el tema que consulta el repartidor</div>`;
+    html += `<div class="grid">`;
+    CATALOG.forEach(c=>{
+      html += `<button class="card" onclick="selectCat('${c.id}')">
+        <div class="card-ico">${c.icon}</div>
+        <div>
+          <div class="card-label">${c.label}</div>
+          <div class="card-tag">${c.tag}</div>
+        </div>
+      </button>`;
+    });
+    html += `</div>`;
+  } else {
+    const node = STEPS[state.cat][state.step];
+    if(node.type==='q'){
+      html += `<div class="panel">
+        ${node.eyebrow?`<div class="q-eyebrow">${node.eyebrow}</div>`:''}
+        <div class="q-title">${node.title}</div>
+        ${node.note?`<div class="q-note">${node.note}</div>`:''}
+        ${node.options.map(o=>`<button class="opt" onclick="choose('${o.to}', ${o.eviFlag===undefined?'undefined':o.eviFlag})">${o.label}</button>`).join('')}
+      </div>`;
+    } else if(node.type==='form'){
+      html += `<div class="panel">
+        <div class="q-eyebrow">Antes de escalar</div>
+        <div class="q-title">Registro para Defensoría al Repartidor</div>
+        <div class="q-note">Complete estos datos y presione "Registrar y escalar": el caso queda guardado automáticamente en la hoja del equipo antes de mostrarle la ruta final.</div>
+        ${state.sinEvidencia? '<div class="q-note" style="color:var(--wait)">Este caso quedó marcado sin evidencia disponible; puede tardar más en resolverse.</div>' : ''}
+        <div class="field"><label>ID del repartidor *</label><input id="f_repartidor" type="text" placeholder="Ej: RT-045213"></div>
+        <div class="field"><label>Ciudad *</label><input id="f_ciudad" type="text" placeholder="Ej: Bogotá"></div>
+        <div class="field"><label>ID de orden (si aplica)</label><input id="f_orden" type="text" placeholder="Ej: #123456789"></div>
+        <div class="field"><label>Correo de contacto *</label><input id="f_correo" type="email" placeholder="correo@ejemplo.com"></div>
+        <div class="field"><label>Teléfono de contacto *</label><input id="f_telefono" type="tel" placeholder="Ej: 3001234567"></div>
+        <div class="field"><label>Explique las razones del escalamiento *</label><textarea id="f_motivo" rows="4" placeholder="Describa brevemente el caso y por qué se escala..."></textarea></div>
+        ${state.sinEvidencia? '' : '<div class="field"><label>Foto de evidencia (si aplica)</label><input id="f_foto" type="file" accept="image/*"></div>'}
+        <div class="form-err" id="f_err"></div>
+        <button class="opt opt-submit" id="f_submit_btn" onclick="submitForm('${node.next}')">Registrar y escalar</button>
+      </div>`;
+    } else if(node.type==='r'){
+      const band = {wait:'band-wait', escalate:'band-escalate', self:'band-self', info:'band-info'}[node.tone];
+      const bandText = {wait:'⏳ Esperar resolución', escalate:'↗ Escalar a Defensoría', self:'↺ Gestión del RT', info:'ℹ Información'}[node.tone];
+      html += `<div class="result-band ${band}">${bandText}</div>`;
+      html += `<div class="result-body">`;
+      html += `<div class="result-title">${node.title}</div>`;
+      if(node.lead) html += `<div class="result-lead">${node.lead}</div>`;
+      if(node.golden) html += `<div class="golden"><div class="golden-h">Regla de oro</div><div class="golden-b">${node.golden}</div></div>`;
+      const routeToShow = node.route;
+      if(routeToShow){
+        html += `<div class="route-label">Ruta dentro de la app</div>`;
+        html += `<div class="route-chain">`;
+        routeToShow.forEach((r,i)=>{
+          html += `<span class="route-badge">${r}</span>`;
+          if(i<routeToShow.length-1) html += `<span class="route-arrow">➔</span>`;
+        });
+        html += `</div>`;
+      }
+      if(node.tip) html += `<div class="tip">${node.tip}</div>`;
+      if(node.evidence){
+        html += `<div class="block"><div class="block-h">Evidencia requerida</div>`;
+        node.evidence.forEach(e=> html += `<div class="chk">${e}</div>`);
+        html += `</div>`;
+      }
+      if(node.tone==='escalate' && state.formData){
+        const fd = state.formData;
+        html += `<div class="block"><div class="block-h">Datos registrados</div>
+          <div class="chk">ID repartidor: ${fd.repartidor}</div>
+          <div class="chk">Ciudad: ${fd.ciudad}</div>
+          ${fd.orden? `<div class="chk">Orden: ${fd.orden}</div>` : ''}
+          <div class="chk">Correo: ${fd.correo}</div>
+          <div class="chk">Teléfono: ${fd.telefono}</div>
+          <div class="chk">Motivo: ${fd.motivo}</div>
+          ${fd.foto? `<div class="chk">Foto adjunta: ${fd.foto}</div>` : '<div class="warn">No se adjuntó foto. Si aplica al caso, recuerde subirla por el canal oficial.</div>'}
+        </div>`;
+      }
+      let allWarnings = (node.warnings || []).slice();
+      if(state.sinEvidencia && node.noEviWarnings) allWarnings = allWarnings.concat(node.noEviWarnings);
+      if(allWarnings.length){
+        html += `<div class="block"><div class="block-h">Atención</div>`;
+        allWarnings.forEach(w=> html += `<div class="warn">${w}</div>`);
+        html += `</div>`;
+      }
+      html += `<div class="result-actions">`;
+      if(node.end===false && node.next){
+        html += `<button class="btn btn-primary" onclick="choose('${node.next}')">${node.nextLabel||'Continuar'}</button>`;
+      } else {
+        html += `<button class="btn btn-primary" onclick="copySummary()">Copiar resumen</button>
+                  <button class="btn btn-ghost" onclick="goHome()">Nuevo caso</button>`;
+      }
+      html += `</div>`;
+      html += `</div>`;
+    }
+  }
+
+  return html;
+}
+
+render();
+</script>
+</body>
+</html>
