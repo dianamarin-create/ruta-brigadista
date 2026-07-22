@@ -101,6 +101,9 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:
 .signed-in-row{font-size:13px;color:var(--text-dim);background:var(--panel-alt);border:1px solid var(--line);border-radius:8px;padding:9px 12px;margin-top:12px;}
 .signed-in-row a{color:var(--brand);text-decoration:none;font-weight:600;}
 .signed-in-row a:hover{text-decoration:underline;}
+.radicado-box{background:var(--brand-soft);border:1px solid var(--brand);border-radius:10px;padding:14px 16px;margin-bottom:14px;text-align:center;}
+.radicado-label{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--brand);font-family:'Barlow Condensed';font-weight:700;margin-bottom:4px;}
+.radicado-num{font-size:22px;font-weight:800;font-family:'Barlow Condensed';color:var(--text);letter-spacing:.03em;}
 .field label{display:block;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim);margin-bottom:5px;font-family:'Barlow Condensed';font-weight:600;}
 .field input[type=text],.field input[type=email],.field input[type=tel],.field textarea{
   width:100%;background:var(--panel-alt);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:10px 11px;font-size:14px;font-family:'Inter';resize:vertical;
@@ -767,18 +770,31 @@ function submitForm(nextId){
   const ciudad = get('f_ciudad');
   const orden = get('f_orden');
   const correo = get('f_correo');
-  const telefono = get('f_telefono');
+  const telefonoRaw = get('f_telefono');
+  const telefono = telefonoRaw.replace(/\D/g, '');
   const motivo = get('f_motivo');
   const fotoInput = document.getElementById('f_foto');
   const errBox = document.getElementById('f_err');
   const btn = document.getElementById('f_submit_btn');
+  const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   if(!state.googleIdToken){
     errBox.textContent = 'Debes iniciar sesión con Google antes de escalar el caso.';
     errBox.classList.add('show');
     return;
   }
-  if(!repartidor || !ciudad || !correo || !telefono || !motivo){
+  if(!repartidor || !ciudad || !correo || !telefonoRaw || !motivo){
     errBox.textContent = 'Complete los campos obligatorios (*) antes de escalar.';
+    errBox.classList.add('show');
+    return;
+  }
+  if(!emailValido.test(correo)){
+    errBox.textContent = 'Ingrese un correo de contacto válido para el repartidor (ej: nombre@correo.com).';
+    errBox.classList.add('show');
+    return;
+  }
+  if(telefono.length !== 10){
+    errBox.textContent = 'El teléfono debe tener exactamente 10 dígitos (solo números).';
     errBox.classList.add('show');
     return;
   }
@@ -792,7 +808,7 @@ function submitForm(nextId){
     ruta: (targetNode && targetNode.route) ? targetNode.route.join(' -> ') : '',
     recorrido: buildTrail()
   };
-  state.formData = { correoBrigadista: state.googleEmail, repartidor, ciudad, orden, correo, telefono, motivo, foto:'' };
+  state.formData = { correoBrigadista: state.googleEmail, repartidor, ciudad, orden, correo, telefono, motivo, foto:'', radicado:'' };
 
   function proceed(){ choose(nextId); }
 
@@ -815,7 +831,9 @@ function sendToSheet(payload, btn, onDone){
   if(btn){ btn.textContent = 'Guardando...'; btn.disabled = true; }
   callApi('saveCase', payload, 'POST').then(function(res){
     if(btn){ btn.textContent = 'Registrar y escalar'; btn.disabled = false; }
-    if(!res || !res.ok){
+    if(res && res.ok){
+      state.formData.radicado = res.radicado || '';
+    } else {
       alert('No se pudo guardar en la hoja: ' + (res && res.error ? res.error : 'error desconocido') + '. Se continúa igual; use "Copiar resumen" como respaldo.');
     }
     onDone();
@@ -865,6 +883,7 @@ function copySummary(){
   if(node.tone==='escalate' && state.formData){
     const fd = state.formData;
     lines.push('--- Registro para Defensoría ---');
+    if(fd.radicado) lines.push('Radicado: ' + fd.radicado);
     lines.push('Brigadista: ' + fd.correoBrigadista);
     lines.push('ID repartidor: ' + fd.repartidor);
     lines.push('Ciudad: ' + fd.ciudad);
@@ -885,12 +904,34 @@ function copySummary(){
 /* ---------- render ---------- */
 function render(){
   const app = document.getElementById('app');
+  if(!state.googleIdToken){
+    app.innerHTML = renderLoginGate();
+    initGoogleButton();
+    return;
+  }
   let html = renderTabBar();
   if(state.tab==='noticias') html += renderNoticias();
   else if(state.tab==='faq') html += renderFAQ();
   else html += renderConsultas();
   app.innerHTML = html;
   initGoogleButton();
+}
+
+function renderLoginGate(){
+  return `
+    <div class="hdr" style="justify-content:center;">
+      <div style="text-align:center;">
+        <div class="hdr-title">Ruta Brigadista</div>
+        <div class="hdr-sub">Filtro operativo · RTs</div>
+      </div>
+    </div>
+    <div class="panel" style="text-align:center;padding:32px 20px;">
+      <div class="q-title">Inicia sesión para continuar</div>
+      <div class="q-note">Usa tu cuenta de Google (Gmail) para entrar a la herramienta.</div>
+      <div id="google-signin-btn" style="margin-top:18px;display:flex;justify-content:center;"></div>
+      ${!CONFIG.googleClientId? '<div class="warn" style="margin-top:14px;text-align:left;">Falta configurar CONFIG.googleClientId en el código.</div>' : ''}
+    </div>
+  `;
 }
 
 function renderTabBar(){
@@ -1028,32 +1069,22 @@ function renderConsultas(){
         ${node.options.map(o=>`<button class="opt" onclick="choose('${o.to}', ${o.eviFlag===undefined?'undefined':o.eviFlag})">${o.label}</button>`).join('')}
       </div>`;
     } else if(node.type==='form'){
-      if(!state.googleIdToken){
-        html += `<div class="panel">
-          <div class="q-eyebrow">Antes de escalar</div>
-          <div class="q-title">Inicia sesión para continuar</div>
-          <div class="q-note">Para registrar el caso, primero identifica con qué cuenta de Google estás reportando. El sistema guarda ese correo automáticamente — no hace falta escribirlo.</div>
-          <div id="google-signin-btn" style="margin-top:14px;"></div>
-          ${!CONFIG.googleClientId? '<div class="warn" style="padding-left:0;margin-top:14px;">Falta configurar CONFIG.googleClientId en el código para que el botón de Google aparezca aquí.</div>' : ''}
-        </div>`;
-      } else {
-        html += `<div class="panel">
-          <div class="q-eyebrow">Antes de escalar</div>
-          <div class="q-title">Registro para Defensoría al Repartidor</div>
-          <div class="q-note">Complete estos datos y presione "Registrar y escalar": el caso queda guardado automáticamente en la hoja del equipo antes de mostrarle la ruta final.</div>
-          ${state.sinEvidencia? '<div class="q-note" style="color:var(--wait)">Este caso quedó marcado sin evidencia disponible; puede tardar más en resolverse.</div>' : ''}
-          <div class="signed-in-row">Reportando como <strong>${state.googleEmail}</strong> · <a href="#" onclick="signOutGoogle();return false;">cambiar cuenta</a></div>
-          <div class="field"><label>ID del repartidor *</label><input id="f_repartidor" type="text" placeholder="Ej: RT-045213"></div>
-          <div class="field"><label>Ciudad *</label><input id="f_ciudad" type="text" placeholder="Ej: Bogotá"></div>
-          <div class="field"><label>ID de orden (si aplica)</label><input id="f_orden" type="text" placeholder="Ej: #123456789"></div>
-          <div class="field"><label>Correo de contacto del repartidor (RT) *</label><input id="f_correo" type="email" placeholder="correo@ejemplo.com"></div>
-          <div class="field"><label>Teléfono de contacto *</label><input id="f_telefono" type="tel" placeholder="Ej: 3001234567"></div>
-          <div class="field"><label>Explique las razones del escalamiento *</label><textarea id="f_motivo" rows="4" placeholder="Describa brevemente el caso y por qué se escala..."></textarea></div>
-          ${state.sinEvidencia? '' : '<div class="field"><label>Foto de evidencia (si aplica)</label><input id="f_foto" type="file" accept="image/*"></div>'}
-          <div class="form-err" id="f_err"></div>
-          <button class="opt opt-submit" id="f_submit_btn" onclick="submitForm('${node.next}')">Registrar y escalar</button>
-        </div>`;
-      }
+      html += `<div class="panel">
+        <div class="q-eyebrow">Antes de escalar</div>
+        <div class="q-title">Registro para Defensoría al Repartidor</div>
+        <div class="q-note">Complete estos datos y presione "Registrar y escalar": el caso queda guardado automáticamente en la hoja del equipo antes de mostrarle la ruta final.</div>
+        ${state.sinEvidencia? '<div class="q-note" style="color:var(--wait)">Este caso quedó marcado sin evidencia disponible; puede tardar más en resolverse.</div>' : ''}
+        <div class="signed-in-row">Reportando como <strong>${state.googleEmail}</strong> · <a href="#" onclick="signOutGoogle();return false;">cambiar cuenta</a></div>
+        <div class="field"><label>ID del repartidor *</label><input id="f_repartidor" type="text" placeholder="Ej: RT-045213"></div>
+        <div class="field"><label>Ciudad *</label><input id="f_ciudad" type="text" placeholder="Ej: Bogotá"></div>
+        <div class="field"><label>ID de orden (si aplica)</label><input id="f_orden" type="text" placeholder="Ej: #123456789"></div>
+        <div class="field"><label>Correo de contacto del repartidor (RT) *</label><input id="f_correo" type="email" placeholder="correo@ejemplo.com"></div>
+        <div class="field"><label>Teléfono de contacto (10 dígitos) *</label><input id="f_telefono" type="tel" inputmode="numeric" placeholder="Ej: 3001234567"></div>
+        <div class="field"><label>Explique las razones del escalamiento *</label><textarea id="f_motivo" rows="4" placeholder="Describa brevemente el caso y por qué se escala..."></textarea></div>
+        ${state.sinEvidencia? '' : '<div class="field"><label>Foto de evidencia (si aplica)</label><input id="f_foto" type="file" accept="image/*"></div>'}
+        <div class="form-err" id="f_err"></div>
+        <button class="opt opt-submit" id="f_submit_btn" onclick="submitForm('${node.next}')">Registrar y escalar</button>
+      </div>`;
     } else if(node.type==='r'){
       const band = {wait:'band-wait', escalate:'band-escalate', self:'band-self', info:'band-info'}[node.tone];
       const bandText = {wait:'⏳ Esperar resolución', escalate:'↗ Escalar a Defensoría', self:'↺ Gestión del RT', info:'ℹ Información'}[node.tone];
@@ -1077,6 +1108,12 @@ function renderConsultas(){
         html += `<div class="block"><div class="block-h">Evidencia requerida</div>`;
         node.evidence.forEach(e=> html += `<div class="chk">${e}</div>`);
         html += `</div>`;
+      }
+      if(node.tone==='escalate' && state.formData && state.formData.radicado){
+        html += `<div class="radicado-box">
+          <div class="radicado-label">Número de radicado</div>
+          <div class="radicado-num">${state.formData.radicado}</div>
+        </div>`;
       }
       if(node.tone==='escalate' && state.formData){
         const fd = state.formData;
