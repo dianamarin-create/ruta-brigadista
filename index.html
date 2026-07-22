@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Ruta Brigadista</title>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://accounts.google.com/gsi/client" async defer onload="onGoogleLibraryLoad()"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -652,8 +652,15 @@ function handleGoogleCredential(response){
   render();
 }
 
+let googleButtonRetries = 0;
 function initGoogleButton(){
-  if(typeof google === 'undefined' || !google.accounts || !google.accounts.id) return;
+  if(typeof google === 'undefined' || !google.accounts || !google.accounts.id){
+    if(googleButtonRetries < 10){
+      googleButtonRetries++;
+      setTimeout(initGoogleButton, 400);
+    }
+    return;
+  }
   if(!CONFIG.googleClientId){ return; }
   google.accounts.id.initialize({
     client_id: CONFIG.googleClientId,
@@ -664,6 +671,13 @@ function initGoogleButton(){
     el.innerHTML = '';
     google.accounts.id.renderButton(el, { theme:'outline', size:'large', text:'signin_with', width:280 });
   }
+}
+
+function onGoogleLibraryLoad(){
+  // La librería de Google puede tardar en cargar más que el resto de la
+  // página; en cuanto esté lista, se vuelve a dibujar la pantalla para
+  // que el botón de inicio de sesión aparezca (antes podía quedar vacío).
+  render();
 }
 
 function signOutGoogle(){
