@@ -515,22 +515,8 @@ retencion:{
 /* 12. CASO YA NEGADO */
 negado:{
   start:{
-    type:'q', eyebrow:'Paso 1', title:'¿El RT tiene un soporte o argumento nuevo, distinto al ya presentado en su caso anterior?',
-    options:[
-      {label:'Sí, hay evidencia nueva', to:'form_negado'},
-      {label:'No, quiere que se revise lo mismo otra vez', to:'no_reabrir_general'}
-    ]
-  },
-  form_negado: formNode('reabrir_con_evidencia'),
-  reabrir_con_evidencia:{
-    type:'r', tone:'escalate', title:'Puede escalarse con el nuevo soporte',
-    lead:'Con evidencia adicional real, el caso puede volver a revisión en Defensoría al Repartidor.',
-    tip:'Si el RT sigue en desacuerdo con la respuesta recibida, también puede remitir su solicitud a notificacionesrappi@rappi.com indicando: ID de repartidor, ID de la orden (si aplica), correo y teléfono de contacto, y siendo muy claro en el motivo por el cual no está de acuerdo con la respuesta brindada.',
-    end:true
-  },
-  no_reabrir_general:{
-    type:'r', tone:'info', title:'No es posible reabrir el caso',
-    lead:'Una respuesta negativa formal ya emitida (por irregularidades graves, suplantación u otro motivo) no puede reabrirse por inconformidad. Insistir sin evidencia nueva constituye incumplimiento de los Términos y Condiciones.',
+    type:'r', tone:'info', title:'Caso ya negado por Defensoría',
+    lead:'Una respuesta negativa formal ya emitida (por irregularidades graves, suplantación u otro motivo) no puede reabrirse por inconformidad, ni siquiera con un argumento distinto al ya presentado.',
     tip:'Si el RT sigue en desacuerdo con la respuesta recibida, puede remitir su solicitud a notificacionesrappi@rappi.com indicando: ID de repartidor, ID de la orden (si aplica), correo y teléfono de contacto, y siendo muy claro en el motivo por el cual no está de acuerdo con la respuesta brindada.',
     end:true
   }
@@ -762,21 +748,25 @@ function toggleNoticiaForm(){
 
 function submitNoticia(){
   const get = id => document.getElementById(id).value.trim();
-  const codigo = get('n_codigo');
   const titulo = get('n_titulo');
   const cuerpo = get('n_cuerpo');
   const imgInput = document.getElementById('n_imagen');
   const errBox = document.getElementById('n_err');
   const btn = document.getElementById('n_submit_btn');
 
-  if(!codigo || !titulo || !cuerpo){
-    errBox.textContent = 'Complete el código de administrador, el título y el texto de la noticia.';
+  if(!state.googleIdToken){
+    errBox.textContent = 'Debes iniciar sesión con Google antes de publicar.';
+    errBox.classList.add('show');
+    return;
+  }
+  if(!titulo || !cuerpo){
+    errBox.textContent = 'Complete el título y el texto de la noticia.';
     errBox.classList.add('show');
     return;
   }
   errBox.classList.remove('show');
 
-  const payload = { codigo, titulo, cuerpo };
+  const payload = { idToken: state.googleIdToken, titulo, cuerpo };
 
   function enviar(){
     if(btn){ btn.textContent = 'Publicando...'; btn.disabled = true; }
@@ -1014,10 +1004,10 @@ function renderNoticias(){
 
   if(state.noticiasFormOpen){
     html += `<div class="panel">
-      <div class="q-eyebrow">Solo personal autorizado</div>
+      <div class="q-eyebrow">Solo brigadistas activos autorizados</div>
       <div class="q-title">Publicar noticia</div>
-      <div class="q-note">Se requiere el código de administrador para publicar. Pídelo a quien administra esta herramienta.</div>
-      <div class="field"><label>Código de administrador *</label><input id="n_codigo" type="password" placeholder="••••••••"></div>
+      <div class="q-note">Se valida contra la lista de correos activos antes de publicar.</div>
+      <div class="signed-in-row">Publicando como <strong>${state.googleEmail}</strong></div>
       <div class="field"><label>Título *</label><input id="n_titulo" type="text" placeholder="Ej: Cambio en horario de pagos"></div>
       <div class="field"><label>Texto de la noticia *</label><textarea id="n_cuerpo" rows="4" placeholder="Escribe el contenido de la noticia..."></textarea></div>
       <div class="field"><label>Imagen (opcional)</label><input id="n_imagen" type="file" accept="image/*"></div>
