@@ -344,7 +344,7 @@ pago_aliado:{
 recaudo:{
   start:{
     type:'q', eyebrow:'Paso 1', title:'¿El RT tiene el comprobante del pago que realizó?',
-    note:'Sin comprobante el bot no puede validar el recaudo.',
+    note:'Sin comprobante el bot no puede validar el recaudo.<br><br>Si el pago se realizó en una máquina Brinks, debe solicitarse la validación directamente por este canal: <a href="mailto:laura.amaya@brinks.com.co">laura.amaya@brinks.com.co</a>, <a href="mailto:monitoreo.autoservicios@brinks.com.co">monitoreo.autoservicios@brinks.com.co</a>, o al 018000 186684 opción 3 (Bogotá: (601) 7446684 opción 3).',
     options:[
       {label:'No tiene comprobante', to:'sin_comprobante'},
       {label:'Sí, tiene el comprobante', to:'gate_recaudo'}
@@ -430,7 +430,7 @@ ato:{
 balance:{
   start:{
     type:'r', tone:'info', title:'Balance y fechas de pago',
-    lead:'El pago habitual se procesa los días martes. Consulte el calendario oficial: soyrappi.com.co/calendario2025',
+    lead:'El pago habitual se procesa los días martes. Consulte el calendario oficial: <a href="https://soyrappi.com.co/calendario2025" target="_blank" rel="noopener">soyrappi.com.co/calendario2025</a>',
     evidence:['Si el pago no llegó el martes, puede tratarse de un reintento bancario, algunos bancos tardan un poco más en procesar el abono.'],
     warnings:['Verifique siempre que el RT tenga una cuenta bancaria asociada y activa en la app. Si no la tiene registrada, el pago simplemente no se efectúa.'],
     end:true
@@ -446,6 +446,48 @@ identidad:{
       'El sistema rechaza automáticamente: fotocopias, fotos de pantalla y documentos plastificados.',
       'El PEP (Permiso Especial de Permanencia) no es un documento válido para este proceso.'
     ],
+    end:false, nextLabel:'Continuar', next:'doc_usado'
+  },
+  doc_usado:{
+    type:'q', eyebrow:'Paso 1', title:'¿Con qué documento físico intentó ingresar el RT?',
+    options:[
+      {label:'PPT (Permiso por Protección Temporal)', to:'no_titular'},
+      {label:'Cédula de Ciudadanía (CC)', to:'no_titular'},
+      {label:'Cédula de Extranjería (CE)', to:'no_titular'}
+    ]
+  },
+  no_titular:{
+    type:'q', eyebrow:'Paso 2', title:'¿Una persona que NO es el titular de la cuenta intentó ingresar anteriormente?',
+    options:[
+      {label:'Sí, alguien más lo intentó antes', to:'no_recuperable'},
+      {label:'No, solo el titular ha intentado ingresar', to:'proceso_correcto'}
+    ]
+  },
+  no_recuperable:{
+    type:'r', tone:'info', title:'No es posible recuperar el acceso',
+    lead:'Si una persona distinta al titular intentó ingresar previamente a la cuenta, ya no es posible recuperar el acceso, dado que esto incumple los Términos y Condiciones de SoyRappi.',
+    end:true
+  },
+  proceso_correcto:{
+    type:'q', eyebrow:'Paso 3', title:'¿El RT realizó el proceso de validación de manera correcta?',
+    options:[
+      {label:'Sí, lo hizo correctamente', to:'form_identidad'},
+      {label:'No lo hizo de manera correcta', to:'reintentar_identidad'}
+    ]
+  },
+  reintentar_identidad:{
+    type:'r', tone:'self', title:'Debe reintentar el proceso correctamente',
+    lead:'Recuerde al RT que debe usar el documento físico original (nunca fotocopias, fotos de pantalla ni documentos plastificados) y seguir el proceso de validación tal como lo solicita la app, antes de continuar.',
+    end:true
+  },
+  form_identidad: Object.assign(formNode('escalar_identidad'), {
+    fotoLabel:'Video o foto de evidencia (cómo el RT realiza el proceso)',
+    fotoAccept:'image/*,video/*'
+  }),
+  escalar_identidad:{
+    type:'r', tone:'escalate', title:'Escalar a Defensoría al Repartidor',
+    evidence:['Video (o, si no es posible, fotos) que muestre claramente cómo el RT realiza el proceso de validación de identidad'],
+    tip:'Si el video pesa demasiado y falla el envío, use "Copiar resumen" y comparta el video por el canal oficial correspondiente.',
     end:true
   }
 },
@@ -483,11 +525,13 @@ negado:{
   reabrir_con_evidencia:{
     type:'r', tone:'escalate', title:'Puede escalarse con el nuevo soporte',
     lead:'Con evidencia adicional real, el caso puede volver a revisión en Defensoría al Repartidor.',
+    tip:'Si el RT sigue en desacuerdo con la respuesta recibida, también puede remitir su solicitud a notificacionesrappi@rappi.com indicando: ID de repartidor, ID de la orden (si aplica), correo y teléfono de contacto, y siendo muy claro en el motivo por el cual no está de acuerdo con la respuesta brindada.',
     end:true
   },
   no_reabrir_general:{
     type:'r', tone:'info', title:'No es posible reabrir el caso',
     lead:'Una respuesta negativa formal ya emitida (por irregularidades graves, suplantación u otro motivo) no puede reabrirse por inconformidad. Insistir sin evidencia nueva constituye incumplimiento de los Términos y Condiciones.',
+    tip:'Si el RT sigue en desacuerdo con la respuesta recibida, puede remitir su solicitud a notificacionesrappi@rappi.com indicando: ID de repartidor, ID de la orden (si aplica), correo y teléfono de contacto, y siendo muy claro en el motivo por el cual no está de acuerdo con la respuesta brindada.',
     end:true
   }
 }
@@ -1095,7 +1139,7 @@ function renderConsultas(){
         <div class="field"><label>Correo de contacto del repartidor (RT) *</label><input id="f_correo" type="email" placeholder="correo@ejemplo.com"></div>
         <div class="field"><label>Teléfono de contacto (10 dígitos) *</label><input id="f_telefono" type="tel" inputmode="numeric" placeholder="Ej: 3001234567"></div>
         <div class="field"><label>Explique las razones del escalamiento *</label><textarea id="f_motivo" rows="4" placeholder="Describa brevemente el caso y por qué se escala..."></textarea></div>
-        ${state.sinEvidencia? '' : '<div class="field"><label>Foto de evidencia (si aplica)</label><input id="f_foto" type="file" accept="image/*"></div>'}
+        ${state.sinEvidencia? '' : `<div class="field"><label>${node.fotoLabel || 'Foto de evidencia (si aplica)'}</label><input id="f_foto" type="file" accept="${node.fotoAccept || 'image/*'}"></div>`}
         <div class="form-err" id="f_err"></div>
         <button class="opt opt-submit" id="f_submit_btn" onclick="submitForm('${node.next}')">Registrar y escalar</button>
       </div>`;
